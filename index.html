@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f4ef">
+  <title>NEXZソート</title>
+  <style>
+    :root {
+      --ink: #252328;
+      --muted: #79757c;
+      --paper: #f6f4ef;
+      --card: #fffdf9;
+      --line: #e6e0d8;
+      --accent: #e95f62;
+      --accent-dark: #c94850;
+      --shadow: 0 18px 50px rgba(49, 36, 34, .09);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--ink); background:
+        radial-gradient(circle at 8% 4%, #ffe6df 0, transparent 25rem),
+        radial-gradient(circle at 94% 92%, #e8e4fb 0, transparent 26rem), var(--paper);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .shell { width: min(100% - 32px, 900px); margin: 0 auto; padding: 34px 0 52px; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+    .eyebrow { color: var(--accent-dark); font-size: .73rem; font-weight: 800; letter-spacing: .16em; margin: 0 0 9px; }
+    .home-link { display: inline-block; border: 0; padding: 0; color: inherit; background: transparent; text-align: left; }
+    .home-link:focus-visible { outline: 3px solid #e95f6260; outline-offset: 7px; border-radius: 8px; }
+    h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.35rem); letter-spacing: -.06em; line-height: 1; }
+    h1 span { color: var(--accent); }
+    .subtitle { color: var(--muted); font-size: .9rem; margin: 13px 0 0; }
+    .ghost-button, .secondary {
+      border: 1px solid var(--line); background: rgba(255,255,255,.52); color: var(--ink);
+      border-radius: 999px; padding: 10px 15px; font-size: .82rem; font-weight: 700;
+    }
+    .ghost-button:hover, .secondary:hover { background: var(--card); border-color: #d4cbc0; }
+    .panel { background: rgba(255,253,249,.86); border: 1px solid rgba(230,224,216,.8); border-radius: 25px; box-shadow: var(--shadow); }
+    .setup { padding: 23px; }
+    .panel-title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+    h2 { margin: 0; font-size: 1.05rem; }
+    .count { color: var(--muted); font-size: .78rem; font-weight: 700; }
+    .song-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; max-height: 340px; overflow: auto; padding: 2px; }
+    .song-row { display: flex; gap: 7px; align-items: center; }
+    .song-row input { min-width: 0; width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: var(--ink); outline: none; }
+    .song-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #e95f6220; }
+    .remove { width: 29px; height: 29px; flex: 0 0 29px; border: 0; border-radius: 50%; color: #aaa3a1; background: transparent; font-size: 1.2rem; }
+    .remove:hover { color: var(--accent-dark); background: #fae8e5; }
+    .setup-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; }
+    .add { border: 0; background: transparent; color: var(--accent-dark); font-weight: 800; padding: 10px 0; }
+    .primary { border: 0; border-radius: 12px; padding: 13px 23px; color: #fff; background: var(--accent); font-weight: 800; box-shadow: 0 7px 16px #e95f6230; }
+    .primary:hover { background: var(--accent-dark); }
+    .primary:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+    .hint { color: var(--muted); font-size: .74rem; margin: 15px 0 0; line-height: 1.6; }
+    .hidden { display: none !important; }
+    .compare { padding: clamp(20px, 5vw, 38px); text-align: center; }
+    .compare-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; text-align: left; }
+    .progress-label { font-size: .8rem; color: var(--muted); font-weight: 700; }
+    .progress-label strong { color: var(--ink); font-size: 1rem; }
+    .bar { width: min(280px, 45%); height: 7px; background: #ece7e0; border-radius: 99px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .3s ease; }
+    .question { color: var(--muted); font-size: .82rem; margin: 17px 0 15px; }
+    .choices { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 15px; }
+    .choice { min-height: 190px; display: flex; align-items: center; justify-content: center; padding: 25px 18px; position: relative; border: 1px solid var(--line); border-radius: 20px; background: #fff; color: var(--ink); font-size: clamp(1.15rem, 3.4vw, 1.65rem); font-weight: 800; line-height: 1.35; box-shadow: 0 5px 0 #ede6de; transition: transform .14s, border-color .14s, background .14s; }
+    .choice:hover, .choice:focus-visible { transform: translateY(-3px); border-color: var(--accent); background: #fff9f5; outline: none; }
+    .choice:active { transform: translateY(1px); box-shadow: 0 2px 0 #ede6de; }
+    .choice em { position: absolute; top: 12px; left: 15px; font-style: normal; color: #c6beb7; font-size: .7rem; letter-spacing: .1em; }
+    .compare-actions { margin-top: 18px; }
+    .undo { padding: 9px 15px; }
+    .undo:disabled { opacity: .45; cursor: not-allowed; }
+    .result { padding: clamp(21px, 5vw, 36px); }
+    .result-head { display: flex; justify-content: space-between; align-items: end; gap: 15px; margin-bottom: 20px; }
+    .result-head h2 { font-size: clamp(1.5rem, 4vw, 2.1rem); }
+    .result-head p { color: var(--muted); font-size: .8rem; margin: 5px 0 0; }
+    .ranking { list-style: none; padding: 0; margin: 0; display: grid; gap: 7px; }
+    .rank { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); padding: 10px 5px; }
+    .rank:last-child { border-bottom: 0; }
+    .number { color: var(--muted); font-size: .88rem; font-weight: 800; text-align: center; }
+    .rank:first-child .number { color: var(--accent); font-size: 1.3rem; }
+    .song-name { font-weight: 700; }
+    .result-actions { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+    .share-x { background: #202124; }
+    .share-x:hover { background: #000; }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 22px, 900px); padding-top: 24px; }
+      header { margin-bottom: 21px; } header .ghost-button { padding: 8px 10px; }
+      .subtitle { font-size: .78rem; } .setup { padding: 17px; }
+      .song-list { grid-template-columns: 1fr; max-height: 310px; }
+      .choices { gap: 9px; } .choice { min-height: 155px; padding: 23px 10px 18px; border-radius: 15px; }
+      .compare { padding: 18px 13px 22px; } .bar { width: 38%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <button class="home-link" id="homeButton" type="button" aria-label="初期画面に戻る">
+        <p class="eyebrow">NEXZ FAVORITE SONGS</p>
+        <h1>NEXZ<span>ソート</span></h1>
+        <p class="subtitle">二択で選ぶ、NEXZ楽曲ランキング。</p>
+      </button>
+    </header>
+
+    <section class="panel setup" id="setup">
+      <div class="panel-title"><h2>ランキングを作成</h2><span class="count" id="count"></span></div>
+      <p class="subtitle">34曲から、好きな曲を二択で選んでいきます。</p>
+      <div class="setup-actions">
+        <button class="primary" id="startButton" type="button">ソートを始める</button>
+      </div>
+      <p class="hint">すべての組み合わせを比較せず、順位を決めるために必要な比較だけを行います。</p>
+    </section>
+
+    <section class="panel compare hidden" id="compare">
+      <div class="compare-top">
+        <span class="progress-label">比較 <strong id="progressText">1 / 1</strong></span>
+        <div class="bar" aria-label="進捗"><i id="progressBar"></i></div>
+      </div>
+      <p class="question">どちらが好き？</p>
+      <div class="choices">
+        <button class="choice" id="leftChoice" type="button"><em>A</em><span></span></button>
+        <button class="choice" id="rightChoice" type="button"><em>B</em><span></span></button>
+      </div>
+      <div class="compare-actions">
+        <button class="secondary undo" id="undoButton" type="button" disabled>↶ 一つ戻る</button>
+      </div>
+    </section>
+
+    <section class="panel result hidden" id="result">
+      <div class="result-head">
+        <div><h2>あなたのランキング</h2><p id="resultSummary"></p></div>
+      </div>
+      <ol class="ranking" id="ranking"></ol>
+      <div class="result-actions">
+        <button class="primary share-x" id="shareButton" type="button">𝕏 Xで共有</button>
+        <button class="secondary" id="restartButton" type="button">もう一度ソートする</button>
+      </div>
+    </section>
+  </main>
+  <script>
+    const initialSongs = [
+      "Miracle", "Ride the Vibe", "Starlight", "Keep on Moving", "Here & Now",
+      "HARD", "NALLINA", "Next Zeneration", "Eye to Eye", "O-RLY?",
+      "Simmer", "Want More? One More!", "Run With Me", "Slo-mo", "One Bite",
+      "BURNING BLACK", "Make it Better", "One Day", "Legacy", "Beat-Boxer",
+      "I'm Him", "Co-Star", "Next To Me", "Mmchk", "HYPEMAN", "Hellmate",
+      "Hands up, Yo!", "Can't hide", "LOCO", "SAUCIN'", "APPETITE", "UPGRADE",
+      "20 NOW", "ALIENS"
+    ];
+    const $ = (id) => document.getElementById(id);
+    let songs = [...initialSongs];
+    let sorted = [];
+    let pending = [];
+    let mergeQueue = [];
+    let nextQueue = [];
+    let leftRun = [];
+    let rightRun = [];
+    let mergedRun = [];
+    let comparisons = 0;
+    let totalComparisons = 1;
+    let currentPair = null;
+    let history = [];
+
+    function show(view) {
+      $("setup").classList.toggle("hidden", view !== "setup");
+      $("compare").classList.toggle("hidden", view !== "compare");
+      $("result").classList.toggle("hidden", view !== "result");
+      if (view !== "setup") window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    function goHome() {
+      sorted = [];
+      pending = [];
+      mergeQueue = [];
+      nextQueue = [];
+      leftRun = [];
+      rightRun = [];
+      mergedRun = [];
+      currentPair = null;
+      comparisons = 0;
+      history = [];
+      show("setup");
+      updateUndoButton();
+    }
+    function begin() {
+      sorted = []; pending = songs.map(song => [song]); mergeQueue = []; nextQueue = [];
+      comparisons = 0; totalComparisons = maxMergeComparisons(songs.length); history = [];
+      beginPass(); show("compare"); showPair(); updateUndoButton();
+    }
+    function maxMergeComparisons(length) {
+      let total = 0;
+      for (let width = 1; width < length; width *= 2) {
+        for (let start = 0; start < length; start += width * 2) {
+          const left = Math.min(width, length - start);
+          const right = Math.min(width, length - start - left);
+          if (right > 0) total += left + right - 1;
+        }
+      }
+      return total;
+    }
+    // Bottom-up merge sort makes only the comparisons needed to establish the order.
+    function beginPass() {
+      if (pending.length <= 1) { finish(); return; }
+      mergeQueue = []; leftRun = []; rightRun = [];
+      for (let i = 0; i < pending.length; i += 2) {
+        mergeQueue.push({ left: pending[i], right: pending[i + 1] });
+      }
+      nextQueue = [];
+      prepareMerge();
+    }
+    function prepareMerge() {
+      if (!mergeQueue.length) { pending = nextQueue; beginPass(); return; }
+      const pair = mergeQueue.shift();
+      leftRun = pair.left || []; rightRun = pair.right || [];
+      mergedRun = [];
+      if (!rightRun.length) { nextQueue.push(leftRun); prepareMerge(); return; }
+      compareRuns();
+    }
+    function compareRuns() {
+      if (!leftRun.length || !rightRun.length) {
+        nextQueue.push([...mergedRun, ...leftRun, ...rightRun]); prepareMerge(); return;
+      }
+      currentPair = [leftRun[0], rightRun[0]]; showPair();
+    }
+    function choose(index) {
+      if (!currentPair) return;
+      history.push({
+        pending: pending.map(run => [...run]),
+        mergeQueue: mergeQueue.map(pair => ({ left: [...pair.left], right: pair.right ? [...pair.right] : null })),
+        nextQueue: nextQueue.map(run => [...run]),
+        leftRun: [...leftRun],
+        rightRun: [...rightRun],
+        mergedRun: [...mergedRun],
+        comparisons,
+        currentPair: [...currentPair]
+      });
+      const winner = currentPair[index];
+      if (leftRun[0] === winner) mergedRun.push(leftRun.shift());
+      else mergedRun.push(rightRun.shift());
+      comparisons++; currentPair = null; compareRuns();
+      updateUndoButton();
+    }
+    function undo() {
+      const previous = history.pop();
+      if (!previous) return;
+      pending = previous.pending;
+      mergeQueue = previous.mergeQueue;
+      nextQueue = previous.nextQueue;
+      leftRun = previous.leftRun;
+      rightRun = previous.rightRun;
+      mergedRun = previous.mergedRun;
+      comparisons = previous.comparisons;
+      currentPair = previous.currentPair;
+      show("compare");
+      showPair();
+      updateUndoButton();
+    }
+    function updateUndoButton() {
+      $("undoButton").disabled = history.length === 0;
+    }
+    function showPair() {
+      if (!currentPair) return;
+      $("leftChoice").querySelector("span").textContent = currentPair[0];
+      $("rightChoice").querySelector("span").textContent = currentPair[1];
+      const shown = comparisons + 1;
+      $("progressText").textContent = `${shown}回目`;
+      $("progressBar").style.width = `${Math.min(100, (comparisons / Math.max(totalComparisons, shown)) * 100)}%`;
+    }
+    function finish() {
+      sorted = [...pending[0]]; $("progressBar").style.width = "100%";
+      $("ranking").replaceChildren(...sorted.map((song, index) => {
+        const li = document.createElement("li"); li.className = "rank";
+        li.innerHTML = `<span class="number">${index + 1}</span><span class="song-name"></span>`;
+        li.querySelector(".song-name").textContent = song; return li;
+      }));
+      $("resultSummary").textContent = `${sorted.length}曲を${comparisons}回の比較で決定`;
+      show("result");
+    }
+    $("startButton").addEventListener("click", begin);
+    $("homeButton").addEventListener("click", goHome);
+    $("leftChoice").addEventListener("click", () => choose(0));
+    $("rightChoice").addEventListener("click", () => choose(1));
+    $("undoButton").addEventListener("click", undo);
+    $("shareButton").addEventListener("click", () => {
+      const rankingText = sorted.map((song, index) => `${index + 1}. ${song}`).join("\n");
+      const text = `NEXZソートの結果\n${rankingText}\n\n#NEXZソート`;
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    });
+    $("restartButton").addEventListener("click", begin);
+    $("count").textContent = `${songs.length}曲`;
+  </script>
+</body>
+</html>
